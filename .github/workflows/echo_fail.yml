@@ -1,17 +1,37 @@
 name: Echo (Fail)
 
 on:
-  push:                  # push 時に実行
-  workflow_dispatch:     # 手動実行ボタン（Run workflow）を有効化
+  push:
+  workflow_dispatch:
 
 jobs:
   echo:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Record start time
+        id: start
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Echo message
         run: echo "Hello, GitHub Actions!"
 
       - name: Force failure
+        id: fail
         run: |
           echo "Intentional failure: exiting with code 1"
-          exit 1            # ここで必ず失敗（false でも可）
+          exit 1
+        # ここで失敗しても後続を動かすための工夫は不要。下の step に if: always() を指定。
+
+      - name: Update run title with duration
+        if: always()        # 失敗しても実行
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STARTED: ${{ steps.start.outputs.started }}
+        run: |
+          end=$(date +%s)
+          dur=$(( end - STARTED ))
+          new_name="Echo (Fail) (${dur}s)"
+          gh api -X PATCH \
+            repos/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+            -f name="$new_name"
