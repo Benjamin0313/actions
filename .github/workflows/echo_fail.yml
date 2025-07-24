@@ -1,0 +1,17 @@
+name: Echo (Fail)
+
+on:
+  push:                  # push 時に実行
+  workflow_dispatch:     # 手動実行ボタン（Run workflow）を有効化
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo message
+        run: echo "Hello, GitHub Actions!"
+
+      - name: Force failure
+        run: |
+          echo "Intentional failure: exiting with code 1"
+          exit 1            # ここで必ず失敗（false でも可）
