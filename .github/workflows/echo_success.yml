@@ -1,0 +1,31 @@
+name: Echo (Success)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Echo message
+        run: echo "This run will succeed 🎉"
+
+      # タイトル更新（成功でも always で動かしておくと安心）
+      - name: Update run title with duration
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STARTED: ${{ steps.start.outputs.started }}
+        run: |
+          end=$(date +%s)
+          dur=$(( end - STARTED ))
+          new_name="Echo (Success) (${dur}s)"
+          gh api -X PATCH \
+            repos/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+            -f name="$new_name"
